@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, MapPin, Phone, Mail, Star, Filter, Heart, Car, Menu, X, ChevronDown, Zap, Shield, Users, TrendingUp, Plus, Upload, Camera, Check, AlertCircle } from 'lucide-react';
+import { Search, MapPin, Phone, Mail, Star, Filter, Heart, Car, Menu, X, ChevronDown, Zap, Shield, Users, TrendingUp, Plus, Camera } from 'lucide-react';
 import './App.css';
 
 const AutoMarketplace = () => {
@@ -16,8 +16,8 @@ const AutoMarketplace = () => {
   const [uploadingImages, setUploadingImages] = useState(false);
 
   // Configurația Cloudinary din variabilele de mediu
-  const CLOUDINARY_CLOUD_NAME = process.env.REACT_APP_CLOUDINARY_CLOUD_NAME
-  const CLOUDINARY_UPLOAD_PRESET = process.env.REACT_APP_CLOUDINARY_UPLOAD_PRESET
+  const CLOUDINARY_CLOUD_NAME = process.env.REACT_APP_CLOUDINARY_CLOUD_NAME || 'duyauqek6';
+  const CLOUDINARY_UPLOAD_PRESET = process.env.REACT_APP_CLOUDINARY_UPLOAD_PRESET || 'automarket_preset';
 
   // Starea formularului pentru adăugare anunț
   const [formData, setFormData] = useState({
@@ -159,7 +159,7 @@ const AutoMarketplace = () => {
   // Inițializare cars cu datele demonstrative
   useEffect(() => {
     setCars(initialCars);
-  }, []);
+  }, [initialCars]);
 
   useEffect(() => {
     let filtered = cars.filter(car => {
@@ -705,10 +705,10 @@ const AutoMarketplace = () => {
         {mobileMenuOpen && (
           <div className="absolute top-full left-0 right-0 bg-white border-t shadow-lg">
             <nav className="px-4 py-3 space-y-2">
-              <a href="#" className="block py-2 text-gray-700 hover:text-blue-600 font-medium">🏠 Acasă</a>
-              <a href="#" className="block py-2 text-gray-700 hover:text-blue-600 font-medium">🔍 Căutare</a>
-              <a href="#" className="block py-2 text-gray-700 hover:text-blue-600 font-medium">💰 Vinde</a>
-              <a href="#" className="block py-2 text-gray-700 hover:text-blue-600 font-medium">📞 Contact</a>
+              <button className="block py-2 text-gray-700 hover:text-blue-600 font-medium w-full text-left">🏠 Acasă</button>
+              <button className="block py-2 text-gray-700 hover:text-blue-600 font-medium w-full text-left">🔍 Căutare</button>
+              <button className="block py-2 text-gray-700 hover:text-blue-600 font-medium w-full text-left">💰 Vinde</button>
+              <button className="block py-2 text-gray-700 hover:text-blue-600 font-medium w-full text-left">📞 Contact</button>
               <button 
                 onClick={() => {
                   setShowAddForm(true);
