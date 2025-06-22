@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, MapPin, Phone, Mail, Star, Filter, Heart, Car, Menu, X, ChevronDown, Zap, Shield, Users, TrendingUp } from 'lucide-react';
 
 const AutoMarketplace = () => {
