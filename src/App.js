@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, MapPin, Phone, Mail, Star, Filter, Heart, Car, Menu, X, ChevronDown, Zap, Shield, Users, TrendingUp } from 'lucide-react';
+import { Search, MapPin, Phone, Mail, Star, Filter, Heart, Car, Menu, X, ChevronDown, Zap, Shield, Users, TrendingUp, Plus, Upload, Camera, Check, AlertCircle } from 'lucide-react';
 import './App.css';
 
 const AutoMarketplace = () => {
@@ -11,9 +11,33 @@ const AutoMarketplace = () => {
   const [filteredCars, setFilteredCars] = useState([]);
   const [showFilters, setShowFilters] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [cars, setCars] = useState([]);
+  const [uploadingImages, setUploadingImages] = useState(false);
 
-  // Date demonstrative pentru mașini
-  const cars = [
+  // Configurația Cloudinary din variabilele de mediu
+  const CLOUDINARY_CLOUD_NAME = process.env.REACT_APP_CLOUDINARY_CLOUD_NAME
+  const CLOUDINARY_UPLOAD_PRESET = process.env.REACT_APP_CLOUDINARY_UPLOAD_PRESET
+
+  // Starea formularului pentru adăugare anunț
+  const [formData, setFormData] = useState({
+    brand: '',
+    model: '',
+    year: new Date().getFullYear(),
+    price: '',
+    mileage: '',
+    fuel: 'Benzină',
+    transmission: 'Manuală',
+    location: '',
+    description: '',
+    seller: '',
+    phone: '',
+    email: '',
+    images: []
+  });
+
+  // Date demonstrative pentru mașini (la început)
+  const initialCars = [
     {
       id: 1,
       brand: 'BMW',
@@ -130,7 +154,12 @@ const AutoMarketplace = () => {
     }
   ];
 
-  const brands = ['BMW', 'Audi', 'Mercedes', 'Volkswagen', 'Toyota', 'Ford'];
+  const brands = ['BMW', 'Audi', 'Mercedes', 'Volkswagen', 'Toyota', 'Ford', 'Skoda', 'Renault', 'Peugeot', 'Opel'];
+
+  // Inițializare cars cu datele demonstrative
+  useEffect(() => {
+    setCars(initialCars);
+  }, []);
 
   useEffect(() => {
     let filtered = cars.filter(car => {
@@ -144,7 +173,7 @@ const AutoMarketplace = () => {
     });
     
     setFilteredCars(filtered);
-  }, [searchTerm, selectedBrand, priceRange, yearRange]);
+  }, [searchTerm, selectedBrand, priceRange, yearRange, cars]);
 
   const toggleFavorite = (carId) => {
     setFavorites(prev => {
@@ -165,6 +194,393 @@ const AutoMarketplace = () => {
   const formatMileage = (mileage) => {
     return new Intl.NumberFormat('ro-RO').format(mileage) + ' km';
   };
+
+  // Funcție pentru upload imagini pe Cloudinary
+  const uploadToCloudinary = async (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+    formData.append('cloud_name', CLOUDINARY_CLOUD_NAME);
+
+    try {
+      const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
+        method: 'POST',
+        body: formData
+      });
+      
+      const data = await response.json();
+      return data.secure_url;
+    } catch (error) {
+      console.error('Error uploading to Cloudinary:', error);
+      throw error;
+    }
+  };
+
+  // Handler pentru selectarea imaginilor
+  const handleImageSelect = async (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+
+    setUploadingImages(true);
+    
+    try {
+      const uploadPromises = files.map(file => uploadToCloudinary(file));
+      const imageUrls = await Promise.all(uploadPromises);
+      
+      setFormData(prev => ({
+        ...prev,
+        images: [...prev.images, ...imageUrls]
+      }));
+    } catch (error) {
+      alert('Eroare la încărcarea imaginilor. Te rog încearcă din nou.');
+    } finally {
+      setUploadingImages(false);
+    }
+  };
+
+  // Handler pentru schimbarea valorilor din form
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  // Handler pentru submiterea formularului
+  const handleSubmitAd = (e) => {
+    e.preventDefault();
+    
+    if (formData.images.length === 0) {
+      alert('Te rog adaugă cel puțin o imagine!');
+      return;
+    }
+
+    const newCar = {
+      id: Date.now(),
+      ...formData,
+      price: parseInt(formData.price),
+      mileage: parseInt(formData.mileage),
+      year: parseInt(formData.year),
+      rating: 4.0 + Math.random(), // Rating aleatoriu pentru demo
+      verified: false,
+      featured: false
+    };
+
+    setCars(prev => [newCar, ...prev]);
+    
+    // Reset form
+    setFormData({
+      brand: '',
+      model: '',
+      year: new Date().getFullYear(),
+      price: '',
+      mileage: '',
+      fuel: 'Benzină',
+      transmission: 'Manuală',
+      location: '',
+      description: '',
+      seller: '',
+      phone: '',
+      email: '',
+      images: []
+    });
+    
+    setShowAddForm(false);
+    alert('Anunțul a fost adăugat cu succes!');
+  };
+
+  // Funcție pentru ștergerea unei imagini
+  const removeImage = (index) => {
+    setFormData(prev => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== index)
+    }));
+  };
+
+  const AddAdForm = () => (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 rounded-t-2xl">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-bold text-gray-900">🚗 Adaugă anunț nou</h2>
+            <button
+              onClick={() => setShowAddForm(false)}
+              className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+            >
+              <X size={20} />
+            </button>
+          </div>
+        </div>
+
+        <form onSubmit={handleSubmitAd} className="p-6 space-y-6">
+          {/* Informații despre mașină */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">
+              📋 Informații despre vehicul
+            </h3>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Marca *</label>
+                <select
+                  name="brand"
+                  value={formData.brand}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="">Selectează marca</option>
+                  {brands.map(brand => (
+                    <option key={brand} value={brand}>{brand}</option>
+                  ))}
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Model *</label>
+                <input
+                  type="text"
+                  name="model"
+                  value={formData.model}
+                  onChange={handleInputChange}
+                  required
+                  placeholder="ex: A4, Golf, Seria 3"
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Anul fabricației *</label>
+                <input
+                  type="number"
+                  name="year"
+                  value={formData.year}
+                  onChange={handleInputChange}
+                  required
+                  min="1990"
+                  max={new Date().getFullYear() + 1}
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Preț (€) *</label>
+                <input
+                  type="number"
+                  name="price"
+                  value={formData.price}
+                  onChange={handleInputChange}
+                  required
+                  min="0"
+                  placeholder="25000"
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Kilometraj *</label>
+                <input
+                  type="number"
+                  name="mileage"
+                  value={formData.mileage}
+                  onChange={handleInputChange}
+                  required
+                  min="0"
+                  placeholder="50000"
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Combustibil</label>
+                <select
+                  name="fuel"
+                  value={formData.fuel}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="Benzină">Benzină</option>
+                  <option value="Diesel">Diesel</option>
+                  <option value="Hybrid">Hybrid</option>
+                  <option value="Electric">Electric</option>
+                  <option value="GPL">GPL</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Transmisie</label>
+                <select
+                  name="transmission"
+                  value={formData.transmission}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="Manuală">Manuală</option>
+                  <option value="Automată">Automată</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Imagini */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">
+              📸 Imagini vehicul
+            </h3>
+            
+            <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-blue-500 transition-colors">
+              <input
+                type="file"
+                multiple
+                accept="image/*"
+                onChange={handleImageSelect}
+                className="hidden"
+                id="image-upload"
+                disabled={uploadingImages}
+              />
+              <label htmlFor="image-upload" className="cursor-pointer">
+                {uploadingImages ? (
+                  <div className="space-y-2">
+                    <div className="animate-spin mx-auto w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full"></div>
+                    <p className="text-blue-600 font-medium">Se încarcă imaginile...</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <Camera className="mx-auto h-12 w-12 text-gray-400" />
+                    <p className="text-gray-600">
+                      <span className="font-medium text-blue-600">Selectează imagini</span> sau trage aici
+                    </p>
+                    <p className="text-sm text-gray-500">PNG, JPG până la 10MB fiecare</p>
+                  </div>
+                )}
+              </label>
+            </div>
+
+            {formData.images.length > 0 && (
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                {formData.images.map((image, index) => (
+                  <div key={index} className="relative group">
+                    <img
+                      src={image}
+                      alt={`Preview ${index + 1}`}
+                      className="w-full h-24 sm:h-32 object-cover rounded-lg"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeImage(index)}
+                      className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Descriere și locație */}
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Locația *</label>
+              <input
+                type="text"
+                name="location"
+                value={formData.location}
+                onChange={handleInputChange}
+                required
+                placeholder="ex: București, Cluj-Napoca"
+                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Descriere *</label>
+              <textarea
+                name="description"
+                value={formData.description}
+                onChange={handleInputChange}
+                required
+                rows="4"
+                placeholder="Descrie vehiculul: starea tehnică, dotări, istoricul..."
+                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+              />
+            </div>
+          </div>
+
+          {/* Informații contact */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">
+              📞 Informații de contact
+            </h3>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Nume/Companie *</label>
+              <input
+                type="text"
+                name="seller"
+                value={formData.seller}
+                onChange={handleInputChange}
+                required
+                placeholder="Numele tău sau al companiei"
+                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Telefon *</label>
+                <input
+                  type="tel"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleInputChange}
+                  required
+                  placeholder="+40 721 123 456"
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Email *</label>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  required
+                  placeholder="email@exemplu.ro"
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Butoane */}
+          <div className="flex gap-4 pt-4 border-t border-gray-200">
+            <button
+              type="button"
+              onClick={() => setShowAddForm(false)}
+              className="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-colors"
+            >
+              Anulează
+            </button>
+            <button
+              type="submit"
+              disabled={uploadingImages}
+              className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-semibold hover:from-blue-700 hover:to-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {uploadingImages ? 'Se încarcă...' : '🚀 Publică anunțul'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
 
   const MobileCarCard = ({ car }) => (
     <div className="bg-white rounded-2xl shadow-lg overflow-hidden mx-4 mb-6 transform hover:scale-[1.02] transition-all duration-300">
@@ -209,7 +625,7 @@ const AutoMarketplace = () => {
                 </h3>
                 <div className="flex items-center mt-1">
                   <Star size={14} className="text-yellow-500 mr-1" fill="currentColor" />
-                  <span className="text-sm font-medium text-gray-700">{car.rating}</span>
+                  <span className="text-sm font-medium text-gray-700">{car.rating?.toFixed(1)}</span>
                 </div>
               </div>
               <div className="text-right">
@@ -293,7 +709,13 @@ const AutoMarketplace = () => {
               <a href="#" className="block py-2 text-gray-700 hover:text-blue-600 font-medium">🔍 Căutare</a>
               <a href="#" className="block py-2 text-gray-700 hover:text-blue-600 font-medium">💰 Vinde</a>
               <a href="#" className="block py-2 text-gray-700 hover:text-blue-600 font-medium">📞 Contact</a>
-              <button className="w-full mt-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-xl font-semibold">
+              <button 
+                onClick={() => {
+                  setShowAddForm(true);
+                  setMobileMenuOpen(false);
+                }}
+                className="w-full mt-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-xl font-semibold"
+              >
                 ✨ Postează anunț GRATUIT
               </button>
             </nav>
@@ -348,8 +770,20 @@ const AutoMarketplace = () => {
         </div>
       </div>
 
-      {/* Mobile Search */}
+      {/* BUTON ADAUGĂ ANUNȚ - POZIȚIONAT LA MIJLOCUL PAGINII */}
       <div className="px-4 -mt-6 relative z-10 mb-6">
+        <div className="text-center mb-4">
+          <button
+            onClick={() => setShowAddForm(true)}
+            className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-8 py-4 rounded-2xl font-bold text-lg shadow-lg shadow-green-500/30 hover:shadow-xl hover:scale-105 transition-all duration-200 flex items-center justify-center mx-auto"
+          >
+            <Plus size={24} className="mr-2" />
+            🚗 Adaugă anunț GRATUIT
+          </button>
+          <p className="text-gray-600 text-sm mt-2">Publică gratuit și găsește cumpărătorul în câteva zile!</p>
+        </div>
+
+        {/* Mobile Search */}
         <div className="bg-white rounded-2xl shadow-xl p-4">
           <div className="relative mb-4">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -468,6 +902,9 @@ const AutoMarketplace = () => {
         </div>
       )}
 
+      {/* Modal pentru adăugare anunț */}
+      {showAddForm && <AddAdForm />}
+
       {/* Mobile CTA Footer */}
       <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6 mx-4 rounded-2xl mb-6">
         <div className="text-center">
@@ -475,7 +912,10 @@ const AutoMarketplace = () => {
           <p className="text-blue-100 text-sm mb-4">
             Postează gratuit anunțul și găsește cumpărătorul perfect în câteva zile!
           </p>
-          <button className="w-full bg-white text-blue-600 py-3 rounded-xl font-bold text-sm hover:bg-gray-50 transition-colors">
+          <button 
+            onClick={() => setShowAddForm(true)}
+            className="w-full bg-white text-blue-600 py-3 rounded-xl font-bold text-sm hover:bg-gray-50 transition-colors"
+          >
             🚀 Postează GRATUIT acum
           </button>
         </div>
