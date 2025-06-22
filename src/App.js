@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Search, MapPin, Phone, Mail, Star, Filter, Heart, Car, Menu, X, ChevronDown, Zap, Shield, Users, TrendingUp } from 'lucide-react';
+import './App.css';
 
 const AutoMarketplace = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -537,46 +538,6 @@ const AutoMarketplace = () => {
         </div>
       </footer>
 
-      <style jsx>{`
-        .slider::-webkit-slider-thumb {
-          appearance: none;
-          height: 20px;
-          width: 20px;
-          border-radius: 50%;
-          background: linear-gradient(45deg, #3B82F6, #8B5CF6);
-          cursor: pointer;
-          box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
-        }
-        
-        .slider::-moz-range-thumb {
-          height: 20px;
-          width: 20px;
-          border-radius: 50%;
-          background: linear-gradient(45deg, #3B82F6, #8B5CF6);
-          cursor: pointer;
-          border: none;
-          box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
-        }
-        
-        @keyframes slide-in-from-top {
-          from {
-            opacity: 0;
-            transform: translateY(-10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        
-        .animate-in {
-          animation-fill-mode: both;
-        }
-        
-        .slide-in-from-top {
-          animation-name: slide-in-from-top;
-        }
-      `}</style>
     </div>
   );
 };
