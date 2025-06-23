@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Search, MapPin, Phone, Mail, Star, Filter, Heart, Car, Menu, X, ChevronDown, Zap, Shield, Users, TrendingUp, Plus, Camera, ArrowLeft, Share2, MessageCircle } from 'lucide-react';
 import { createClient } from '@supabase/supabase-js';
-import Zoom from 'react-medium-image-zoom';
-import 'react-medium-image-zoom/dist/styles.css';
+import InnerImageZoom from 'react-inner-image-zoom';
 
 const AutoMarketplace = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -509,24 +508,24 @@ const AutoMarketplace = () => {
 
         {/* Modal pentru imagine mare */}
         {showFullImage && (
-          <div
-            onClick={() => setShowFullImage(false)}
-            className="fixed inset-0 z-50 bg-white backdrop-blur-sm flex items-center justify-center"
-          >
+            <div
+              onClick={() => setShowFullImage(false)}
+              className="fixed inset-0 z-50 bg-black overflow-auto"
+              style={{ touchAction: 'pinch-zoom' }}
+            >
             {/* Închide la click în fundal */}
             <div
-              className="relative w-full h-screen max-w-6xl mx-auto flex items-center justify-center"
+              className="relative w-full max-w-6xl mx-auto flex items-center justify-center min-h-screen"
               onClick={(e) => e.stopPropagation()}
             >
 
               {/* Imaginea mărită */}
-                  <Zoom>
-                    <img
-                      src={images[currentImageIndex]}
-                      alt="Imagine mare"
-                      className="max-w-full max-h-full object-contain object-center mx-auto block"
-                    />
-                  </Zoom>
+              <img
+                src={images[currentImageIndex]}
+                alt="Imagine mare"
+                className="w-full h-[80vh] object-cover object-center rounded-lg"
+                style={{ touchAction: 'none' }}
+              />
               {/* Buton închidere */}
               <button
                 onClick={() => setShowFullImage(false)}
