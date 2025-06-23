@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Search, MapPin, Phone, Mail, Star, Filter, Heart, Car, Menu, X, ChevronDown, Zap, Shield, Users, TrendingUp, Plus, Camera, ArrowLeft, Share2, MessageCircle } from 'lucide-react';
 import { createClient } from '@supabase/supabase-js';
+import Zoom from 'react-medium-image-zoom';
+import 'react-medium-image-zoom/dist/styles.css';
 
 const AutoMarketplace = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -20,6 +22,7 @@ const AutoMarketplace = () => {
   const [selectedCar, setSelectedCar] = useState(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [draggedImageIndex, setDraggedImageIndex] = useState(null);
+  const [showFullImage, setShowFullImage] = useState(false);
 
   // Configurația Cloudinary din variabilele de mediu
   const CLOUDINARY_CLOUD_NAME = process.env.REACT_APP_CLOUDINARY_CLOUD_NAME || 'duyauqek6';
@@ -181,7 +184,8 @@ const AutoMarketplace = () => {
       });
       
       const data = await response.json();
-      return data.secure_url;
+      const transformedUrl = data.secure_url.replace('/upload/', '/upload/w_600,q_auto:eco/');
+      return transformedUrl;
     } catch (error) {
       console.error('Error uploading to Cloudinary:', error);
       throw error;
@@ -423,10 +427,11 @@ const AutoMarketplace = () => {
         <div className="relative">
           <div className="aspect-[4/3] bg-gray-200 overflow-hidden">
             <img
-              src={images[currentImageIndex]}
-              alt={`${selectedCar.brand} ${selectedCar.model}`}
-              className="w-full h-full object-cover"
-            />
+                src={images[currentImageIndex]}
+                alt={`${selectedCar.brand} ${selectedCar.model}`}
+                className="w-full h-full object-cover cursor-zoom-in"
+                onClick={() => setShowFullImage(true)}
+              />
             
             {/* Overlay pentru navigare imagini */}
             {images.length > 1 && (
@@ -487,6 +492,53 @@ const AutoMarketplace = () => {
             </div>
           )}
         </div>
+
+        {/* Modal pentru imagine mare */}
+        {showFullImage && (
+          <div
+            onClick={() => setShowFullImage(false)}
+            className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center"
+          >
+            {/* Închide la click în fundal */}
+            <div className="relative w-full h-full max-w-4xl mx-auto" onClick={(e) => e.stopPropagation()}>
+              {/* Imaginea mărită */}
+              <Zoom>
+                  <img
+                    src={images[currentImageIndex]}
+                    alt="Imagine mare"
+                    className="w-full max-h-[90vh] object-contain rounded-lg"
+                  />
+              </Zoom>
+
+
+              {/* Buton închidere */}
+              <button
+                onClick={() => setShowFullImage(false)}
+                className="absolute top-4 right-4 text-white bg-black/50 rounded-full p-2"
+              >
+                <X size={24} />
+              </button>
+
+              {/* Săgeți */}
+              {images.length > 1 && (
+                <>
+                  <button
+                    onClick={() => setCurrentImageIndex(prev => prev === 0 ? images.length - 1 : prev - 1)}
+                    className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black/50 text-white p-3 rounded-full"
+                  >
+                    <ArrowLeft size={24} />
+                  </button>
+                  <button
+                    onClick={() => setCurrentImageIndex(prev => prev === images.length - 1 ? 0 : prev + 1)}
+                    className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black/50 text-white p-3 rounded-full"
+                  >
+                    <ArrowLeft size={24} className="rotate-180" />
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Informații despre mașină */}
         <div className="bg-white mt-4 mx-4 rounded-2xl shadow-lg p-6">
