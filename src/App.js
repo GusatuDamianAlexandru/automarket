@@ -150,6 +150,20 @@ const AutoMarketplace = () => {
     setFilteredCars(filtered);
   }, [searchTerm, selectedBrand, priceRange, yearRange, cars]);
 
+  // Daca imaginea e full screen, blochează scroll-ul pe body
+  useEffect(() => {
+  if (showFullImage) {
+    document.body.style.overflow = 'hidden';
+  } else {
+    document.body.style.overflow = 'auto';
+  }
+
+  return () => {
+    document.body.style.overflow = 'auto'; // fallback dacă componenta se unmount-ează
+  };
+}, [showFullImage]);
+
+
   const toggleFavorite = (carId) => {
     setFavorites(prev => {
       const newFavorites = new Set(prev);
@@ -497,20 +511,22 @@ const AutoMarketplace = () => {
         {showFullImage && (
           <div
             onClick={() => setShowFullImage(false)}
-            className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center"
+            className="fixed inset-0 z-50 bg-white backdrop-blur-sm flex items-center justify-center"
           >
             {/* Închide la click în fundal */}
-            <div className="relative w-full h-full max-w-4xl mx-auto" onClick={(e) => e.stopPropagation()}>
+            <div
+              className="relative w-full h-screen max-w-6xl mx-auto flex items-center justify-center"
+              onClick={(e) => e.stopPropagation()}
+            >
+
               {/* Imaginea mărită */}
-              <Zoom>
-                  <img
-                    src={images[currentImageIndex]}
-                    alt="Imagine mare"
-                    className="w-full max-h-[90vh] object-contain rounded-lg"
-                  />
-              </Zoom>
-
-
+                  <Zoom>
+                    <img
+                      src={images[currentImageIndex]}
+                      alt="Imagine mare"
+                      className="max-w-full max-h-full object-contain object-center mx-auto block"
+                    />
+                  </Zoom>
               {/* Buton închidere */}
               <button
                 onClick={() => setShowFullImage(false)}
